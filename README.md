@@ -1,5 +1,10 @@
 # BeamDrop ⚡
 
+[![CI](https://github.com/Anshgrinds/beamdrop/actions/workflows/ci.yml/badge.svg)](https://github.com/Anshgrinds/beamdrop/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-10b981.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-06b6d4.svg)](https://www.python.org/downloads/)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/Anshgrinds/beamdrop/pulls)
+
 > Instant, peer-to-peer file transfer and bidirectional clipboard bridge for your local Wi-Fi network. **Zero dependencies. Zero cloud storage. Zero setup.**
 
 ---
