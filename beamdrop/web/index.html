@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>BeamDrop — Instant Local File & Clipboard Bridge</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+  <meta name="theme-color" content="#0b0f19">
+</head>
+<body>
+  <!-- PIN Lock Overlay -->
+  <div id="pin-overlay" class="overlay hidden">
+    <div class="pin-card glass-panel">
+      <div class="pin-icon">🔒</div>
+      <h2>Protected Connection</h2>
+      <p>Enter the 4-digit PIN displayed on the host terminal to connect.</p>
+      <div class="pin-input-group">
+        <input type="password" id="pin-input" maxlength="8" placeholder="Enter PIN" autocomplete="off" autofocus>
+        <button id="pin-submit" class="btn btn-primary">Connect</button>
+      </div>
+      <p id="pin-error" class="error-text hidden">Invalid PIN. Please check terminal display.</p>
+    </div>
+  </div>
+
+  <!-- QR Code Modal -->
+  <div id="qr-modal" class="modal hidden">
+    <div class="modal-backdrop" id="qr-backdrop"></div>
+    <div class="modal-content glass-panel">
+      <button class="modal-close" id="qr-close">&times;</button>
+      <h3>Scan to Connect</h3>
+      <p class="modal-subtitle">Point another phone's camera at this code:</p>
+      <div class="qr-container">
+        <img id="qr-image" src="/api/qr.svg" alt="Scan QR Code">
+      </div>
+      <p id="qr-url-text" class="url-text"></p>
+      <button class="btn btn-secondary btn-sm" id="btn-copy-url">📋 Copy Link</button>
+    </div>
+  </div>
+
+  <!-- Preview Modal -->
+  <div id="preview-modal" class="modal hidden">
+    <div class="modal-backdrop" id="preview-backdrop"></div>
+    <div class="modal-content glass-panel preview-content">
+      <div class="preview-header">
+        <h4 id="preview-title">File Preview</h4>
+        <button class="modal-close" id="preview-close">&times;</button>
+      </div>
+      <div id="preview-body" class="preview-body">
+        <!-- Injected media preview -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Global Drop Zone Indicator -->
+  <div id="drop-overlay" class="drop-overlay hidden">
+    <div class="drop-box">
+      <div class="drop-icon">📥</div>
+      <h3>Drop files anywhere to beam!</h3>
+    </div>
+  </div>
+
+  <!-- Main App Shell -->
+  <div class="app-container">
+    <!-- Top Navigation Header -->
+    <header class="app-header glass-panel">
+      <div class="brand">
+        <div class="logo-badge">⚡</div>
+        <div class="brand-text">
+          <h1>BeamDrop</h1>
+          <span class="live-status"><span class="pulse-dot"></span> <span id="host-address">Local Network</span></span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="btn-show-qr" class="btn btn-icon" title="Show QR Code">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+          <span class="btn-text">QR Connect</span>
+        </button>
+        <button id="btn-download-all" class="btn btn-secondary btn-sm" title="Download all files as ZIP">
+          📦 ZIP All
+        </button>
+      </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs">
+      <button class="tab-btn active" data-tab="files">
+        <span class="tab-icon">📁</span> Files & Media <span id="badge-file-count" class="badge">0</span>
+      </button>
+      <button class="tab-btn" data-tab="clipboard">
+        <span class="tab-icon">📋</span> Live Clipboard <span class="badge badge-glow">Sync</span>
+      </button>
+      <button class="tab-btn" data-tab="mobile">
+        <span class="tab-icon">📱</span> Quick Mobile Actions
+      </button>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="tab-content-container">
+      
+      <!-- TAB 1: FILES -->
+      <section id="tab-files" class="tab-pane active">
+        <!-- Upload Trigger Card -->
+        <div class="upload-zone glass-panel" id="upload-zone">
+          <input type="file" id="file-input" multiple class="hidden">
+          <div class="upload-cta">
+            <div class="upload-icon-circle">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+            </div>
+            <h3>Drag & Drop Files Here</h3>
+            <p>Or tap to browse from your device storage</p>
+            <div class="upload-buttons">
+              <button class="btn btn-primary" onclick="document.getElementById('file-input').click()">
+                Select Files
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Upload Progress Indicator -->
+        <div id="upload-progress-container" class="glass-panel upload-progress-card hidden">
+          <div class="progress-info">
+            <span id="progress-filename" class="progress-title">Uploading...</span>
+            <span id="progress-percent" class="progress-val">0%</span>
+          </div>
+          <div class="progress-track">
+            <div id="progress-fill" class="progress-fill"></div>
+          </div>
+        </div>
+
+        <!-- File List Header & Filters -->
+        <div class="files-header">
+          <div class="filter-pills">
+            <button class="pill active" data-filter="all">All</button>
+            <button class="pill" data-filter="image">Images</button>
+            <button class="pill" data-filter="video">Videos</button>
+            <button class="pill" data-filter="audio">Audio</button>
+            <button class="pill" data-filter="docs">Documents</button>
+          </div>
+          <button id="btn-refresh-files" class="btn btn-ghost btn-sm" title="Refresh files list">
+            🔄 Refresh
+          </button>
+        </div>
+
+        <!-- Files Grid/List -->
+        <div id="file-list" class="file-grid">
+          <div class="empty-state">
+            <div class="empty-icon">📂</div>
+            <h4>No files dropped yet</h4>
+            <p>Drag any files above to immediately share them across your Wi-Fi network.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: LIVE CLIPBOARD -->
+      <section id="tab-clipboard" class="tab-pane">
+        <div class="clipboard-container glass-panel">
+          <div class="clipboard-top">
+            <div class="section-title">
+              <h3>Live Synced Clipboard</h3>
+              <span class="subtext">Type or paste here to instantly sync across all connected devices.</span>
+            </div>
+            <div class="clipboard-actions">
+              <button id="btn-copy-clip" class="btn btn-secondary btn-sm">📋 Copy to Device</button>
+              <button id="btn-clear-clip" class="btn btn-ghost btn-sm">🗑️ Clear</button>
+            </div>
+          </div>
+          <textarea id="clipboard-textarea" placeholder="Paste links, code snippets, phone numbers, or notes here..."></textarea>
+          <div class="clipboard-footer">
+            <span id="clip-meta" class="meta-info">Ready to sync</span>
+            <button id="btn-send-clip" class="btn btn-primary">⚡ Push Update</button>
+          </div>
+        </div>
+
+        <!-- Clipboard History Log -->
+        <div class="history-container glass-panel">
+          <h4>Recent Snippets</h4>
+          <div id="clipboard-history" class="history-list">
+            <p class="history-empty">No recent snippets.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: QUICK MOBILE ACTIONS -->
+      <section id="tab-mobile" class="tab-pane">
+        <div class="quick-actions-grid">
+          <!-- Camera Snap Card -->
+          <div class="action-card glass-panel">
+            <div class="action-icon">📸</div>
+            <h3>Quick Camera Drop</h3>
+            <p>Snap a photo right now and beam it in original full-resolution to your PC instantly.</p>
+            <input type="file" id="camera-input" accept="image/*" capture="environment" class="hidden">
+            <button class="btn btn-primary" onclick="document.getElementById('camera-input').click()">
+              📷 Take Photo & Beam
+            </button>
+          </div>
+
+          <!-- Quick URL Share Card -->
+          <div class="action-card glass-panel">
+            <div class="action-icon">🔗</div>
+            <h3>Quick Link / Text Drop</h3>
+            <p>Quickly beam a website URL or quick message to the clipboard without switching tabs.</p>
+            <div class="quick-input-group">
+              <input type="text" id="quick-link-input" placeholder="https://example.com">
+              <button class="btn btn-secondary" id="btn-quick-send">Send</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="toast hidden"></div>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <p>BeamDrop • Local Wi-Fi P2P Bridge • Pure Zero-Cloud Security</p>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
