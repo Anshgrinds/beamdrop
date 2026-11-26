@@ -33,22 +33,31 @@ Run a single command on your PC, point your phone's camera at the ASCII QR code 
 
 ## 🚀 Quick Start
 
-### 1. Run Directly (No installation needed)
+### 1. Launch as a Native Desktop App 🖥️
+
+Run as an ultra-fast, standalone desktop app window (powered by Microsoft Edge WebView2 with zero Electron bloat):
+
+```bash
+python app.py
+# or
+python beamdrop.py --app
+```
+
+> **Windows Tip**: You can also simply double-click `BeamDrop.vbs` to launch BeamDrop silently as a native desktop application with no background terminal window!
+
+### 2. Run in CLI / Terminal Mode
 
 Clone the repository and run:
 
 ```bash
-git clone https://github.com/Anshgrinds/beamdrop.git
-cd beamdrop
 python beamdrop.py
 ```
 
-### 2. Connect Your Phone / Devices
+### 3. Install as an App on Mobile (iOS & Android) 📱
 
-1. Look at your terminal: an ASCII QR code will appear along with your local network URL (e.g. `http://192.168.1.50:8080`).
-2. Scan the QR code using your phone's camera (iPhone Camera app or Android Google Lens).
-3. Tap the link to open the web interface in Safari or Chrome.
-4. Drag files or snap photos to transfer instantly!
+1. Scan the QR code or open your local network URL (e.g. `http://192.168.1.146:8080`) in Safari (iOS) or Chrome (Android).
+2. Tap **"Share" → "Add to Home Screen"** (iOS) or tap the **"📲 Install App"** button in the header (Android/Chrome).
+3. BeamDrop now opens full-screen as a standalone native-feeling app on your phone!
 
 ---
 

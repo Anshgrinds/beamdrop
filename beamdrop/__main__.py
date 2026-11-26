@@ -38,8 +38,14 @@ def main():
     parser.add_argument("--no-delete", action="store_true", help="Disallow deleting files via web interface")
     parser.add_argument("--no-qr", action="store_true", help="Do not print terminal QR code")
     parser.add_argument("--open", action="store_true", help="Automatically open browser on launch")
+    parser.add_argument("--app", action="store_true", help="Launch as a native standalone desktop app window")
 
     args = parser.parse_args()
+
+    if args.app:
+        from app import run_desktop_app
+        run_desktop_app(port=args.port, storage_dir=Path(args.dir).resolve(), pin=args.pin)
+        return
 
     port = args.port
     # Check if port is available; if not specified by user explicitly and 8080 is taken, find next

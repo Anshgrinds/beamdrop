@@ -54,6 +54,38 @@
   const hostAddressLabel = document.getElementById('host-address');
   const toastEl = document.getElementById('toast');
 
+  // PWA Install Handling
+  let deferredPrompt = null;
+  const btnInstallPwa = document.getElementById('btn-install-pwa');
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    });
+  }
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    if (btnInstallPwa) {
+      btnInstallPwa.classList.remove('hidden');
+    }
+  });
+
+  if (btnInstallPwa) {
+    btnInstallPwa.addEventListener('click', async () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+          showToast('⚡ Installed BeamDrop App!');
+        }
+        deferredPrompt = null;
+        btnInstallPwa.classList.add('hidden');
+      }
+    });
+  }
+
   // Helpers
   function showToast(message, duration = 3000) {
     toastEl.textContent = message;

@@ -30,8 +30,12 @@ classifiers = [
 requires-python = ">=3.8"
 dependencies = []
 
+[project.optional-dependencies]
+app = ["pywebview>=5.0.0"]
+
 [project.scripts]
 beamdrop = "beamdrop.__main__:main"
+beamdrop-app = "app:run_desktop_app"
 
 [tool.setuptools.package-data]
 "beamdrop" = ["web/*"]
